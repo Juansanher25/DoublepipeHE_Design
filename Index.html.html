@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Double-Pipe Heat Exchanger Design</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .slide {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .slide.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #4b5563;
+            font-weight: 500;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            margin-bottom: 1.5rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 1rem;
+        }
+        h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        .result-label {
+            color: #4b5563;
+        }
+        .result-value {
+            font-weight: 600;
+            color: #111827;
+        }
+        .info-box {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 0.25rem;
+            font-size: 0.9rem;
+            color: #1e40af;
+        }
+        .alert-card {
+            border-left: 5px solid #f97316;
+            background-color: #fff7ed;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        .alert-card .alert-title {
+            color: #9a3412;
+            font-weight: 700;
+        }
+        .alert-card .alert-message {
+            color: #c2410c;
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 0.75rem;
+            text-align: left;
+        }
+        .comparison-table thead {
+            background-color: #f9fafb;
+        }
+        .comparison-table tbody tr:nth-child(odd) {
+            background-color: #f9fafb;
+        }
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+            animation: fadeInModal 0.3s;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 900px;
+            border-radius: 0.75rem;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+        }
+        @keyframes fadeInModal {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+        .chart-container {
+            position: relative;
+            cursor: zoom-in;
+        }
+        .chart-container::after {
+            content: '🔍 Click to expand';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.7);
+            padding: 2px 6px;
+            border-radius: 5px;
+            font-size: 12px;
+            color: #555;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <header class="text-center mb-12">
+            <!-- Institutional Logo -->
+            <img src="https://github.com/Juansanher25/DoublepipeHE_Design/blob/main/logo-principal-UA.png?raw=true" alt="Universidad de América Logo" class="mx-auto mb-6 h-16 object-contain">
+            
+            <!-- Title -->
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Interactive Design Module</h1>
+            <p class="text-gray-600 mt-2 text-lg">Double-Pipe Heat Exchanger</p>
+            
+            <!-- Author Information -->
+            <div class="mt-8 border-t pt-6">
+                <h2 class="text-2xl font-semibold text-gray-700">Juan Andrés Sandoval Herrera, Ph.D.</h2>
+                <p class="text-md text-gray-500">Universidad de América</p>
+                <p class="text-md text-gray-500">Heat Transfer II, 2025</p>
+            </div>
+        </header>
+
+        <!-- All Slides -->
+        <div id="slide-container">
+            <!-- Slide 0: Welcome -->
+            <div id="slide-0" class="slide active">
+                <div class="card text-center">
+                    <h2 class="text-2xl font-bold text-gray-800">Welcome to the Design Module</h2>
+                    <p class="text-gray-600 mt-4">This tool allows for the complete thermal and hydraulic design of a double-pipe heat exchanger.</p>
+                    <p class="text-gray-600 mt-2">Click the button below to begin the design process by entering your initial parameters.</p>
+                </div>
+                <div class="nav-buttons">
+                    <span></span>
+                    <button class="btn btn-primary next-btn">Begin Design</button>
+                </div>
+            </div>
+
+            <!-- Slide 1: Data Input -->
+            <div id="slide-1" class="slide">
+                <div class="card">
+                <form id="design-form">
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="font-bold text-center">Geometry & Material</h3>
+                            <p class="text-center text-sm text-gray-500 mb-4">Enter values for the tubes you are using.</p>
+                            <div class="input-group">
+                                <label for="Di">Inner Pipe ID, Dᵢ (mm)</label>
+                                <input type="number" id="Di" value="35.1" step="0.1" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="Do">Inner Pipe OD, Dₒ (mm)</label>
+                                <input type="number" id="Do" value="42.2" step="0.1" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="D_anulo_i">Outer Pipe ID, Dₐ,ᵢ (mm)</label>
+                                <input type="number" id="D_anulo_i" value="65.3" step="0.1" required>
+                            </div>
+                             <div class="input-group">
+                                <label for="L_horquilla">Hairpin Length (m)</label>
+                                <input type="number" id="L_horquilla" value="3.5" step="0.1" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="k_acero">Pipe Thermal Conductivity, kₚᵢₚₑ (W/mK)</label>
+                                <input type="number" id="k_acero" value="45" step="1" required>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-center justify-center">
+                            <img src="https://github.com/Juansanher25/Heattransfer/blob/main/Double%20tube%20HE.jpg?raw=true" alt="Diagram of a double-pipe heat exchanger" class="rounded-lg shadow-md max-w-full h-auto">
+                            <p class="text-xs text-gray-500 mt-2 text-center">Diagram of a double-pipe (hairpin) heat exchanger.</p>
+                        </div>
+                    </div>
+                    
+                    <p class="text-center text-sm text-gray-500 mt-8">Enter values for your specific fluids in the context.</p>
+                    <div class="grid md:grid-cols-2 gap-8 mt-4 border-t pt-8">
+                        <div>
+                            <h3>Hot Fluid (Inner Pipe)</h3>
+                            <div class="input-group"><label for="m_h">Mass Flow Rate, ṁₕ (kg/s)</label><input type="number" id="m_h" class="thermo-trigger" value="1.5" step="0.1" required></div>
+                            <div class="input-group"><label for="Th_in">Inlet Temp., Tₕ,ᵢₙ (°C)</label><input type="number" id="Th_in" class="thermo-trigger" value="95" required></div>
+                            <div class="input-group"><label for="Th_out">Outlet Temp., Tₕ,ₒᵤₜ (°C)</label><input type="number" id="Th_out" class="thermo-trigger" value="55" required></div>
+                            <div class="input-group"><label for="Rf_i">Fouling Factor, R<sub>f,i</sub> (m²°C/W)</label><input type="number" id="Rf_i" value="0.00005" step="0.00001" required></div>
+                        </div>
+                        <div>
+                            <h3>Cold Fluid (Annulus)</h3>
+                            <div class="input-group"><label for="m_c">Mass Flow Rate, ṁ꜀ (kg/s)</label><input type="number" id="m_c" class="thermo-trigger" value="1.63" step="0.1" required></div>
+                            <div class="input-group"><label for="Tc_in">Inlet Temp., T꜀,ᵢₙ (°C)</label><input type="number" id="Tc_in" class="thermo-trigger" value="10" required></div>
+                            <div class="input-group"><label for="Rf_o">Fouling Factor, R<sub>f,o</sub> (m²°C/W)</label><input type="number" id="Rf_o" value="0.00005" step="0.00001" required></div>
+                            <div class="input-group"><label for="eta_bomba">Pump Efficiency, η (%)</label><input type="number" id="eta_bomba" value="75" required></div>
+                        </div>
+                    </div>
+
+                     <div class="mt-8 border-t pt-8">
+                        <h3 class="text-center font-bold">Thermophysical Properties (at T<sub>avg</sub>)</h3>
+                        <p class="text-center text-sm text-gray-500 mb-4">Properties for water are calculated automatically based on temperatures.</p>
+                        <div class="grid md:grid-cols-2 gap-8">
+                             <div>
+                                <h4 id="hot-fluid-title">Hot Fluid (at T<sub>avg</sub>)</h4>
+                                <div class="input-group"><label for="rho_h">Density, ρₕ (kg/m³)</label><input type="number" id="rho_h" value="974.8" required></div>
+                                <div class="input-group"><label for="cp_h">Specific Heat, Cₚ,ₕ (J/kg°C)</label><input type="number" id="cp_h" value="4193" required></div>
+                                <div class="input-group"><label for="mu_h">Viscosity, μₕ (Pa·s)</label><input type="number" id="mu_h" value="0.000379" step="0.000001" required></div>
+                                <div class="input-group"><label for="k_h">Conductivity, kₕ (W/mK)</label><input type="number" id="k_h" value="0.668" step="0.001" required></div>
+                            </div>
+                            <div>
+                                <h4 id="cold-fluid-title">Cold Fluid (at T<sub>avg</sub>)</h4>
+                                <div class="input-group"><label for="rho_c">Density, ρ꜀ (kg/m³)</label><input type="number" id="rho_c" value="996.0" required></div>
+                                <div class="input-group"><label for="cp_c">Specific Heat, Cₚ,꜀ (J/kg°C)</label><input type="number" id="cp_c" value="4179" required></div>
+                                <div class="input-group"><label for="mu_c">Viscosity, μ꜀ (Pa·s)</label><input type="number" id="mu_c" value="0.000815" step="0.000001" required></div>
+                                <div class="input-group"><label for="k_c">Conductivity, k꜀ (W/mK)</label><input type="number" id="k_c" value="0.615" step="0.001" required></div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                </div>
+                <div class="nav-buttons">
+                    <button class="btn btn-secondary prev-btn">Back to Welcome</button>
+                    <button id="calculate-btn" class="btn btn-primary">Calculate & Proceed</button>
+                </div>
+            </div>
+            
+            <div id="slide-2" class="slide">
+                 <div class="card">
+                <h2 class="font-bold text-center">Thermal Analysis: Coefficients</h2>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h3>Inner Pipe (Hot Fluid)</h3>
+                        <div class="result-item"><span class="result-label">Reynolds, \(Re_h\)</span><span id="res-Re_h" class="result-value"></span></div>
+                        <div class="result-item"><span class="result-label">Nusselt, \(Nu_h\)</span><span id="res-Nu_h" class="result-value"></span></div>
+                        <div class="result-item"><span class="result-label">Convection Coeff., \(h_i\)</span><span id="res-h_i" class="result-value"></span></div>
+                        <div class="result-item"><span class="result-label">Corrected Coeff., \(h_{io}\)</span><span id="res-h_io" class="result-value"></span></div>
+                        <div class="info-box text-xs mt-2" id="correlation-info-hot">
+                            <!-- Correlation info will be inserted by JS -->
+                        </div>
+                    </div>
+                    <div>
+                        <h3>Annulus (Cold Fluid)</h3>
+                        <div class="info-box">
+                            <div class="result-item !border-0 !p-1"><span class="result-label">Equivalent Diameter, \(D_e\)</span><span id="res-De_anulo" class="result-value"></span></div>
+                            <div class="result-item !border-0 !p-1"><span class="result-label">Hydraulic Diameter, \(D_h\)</span><span id="res-Dh_anulo" class="result-value"></span></div>
+                        </div>
+                        <div class="result-item"><span class="result-label">Reynolds (Thermal), \(Re_c\)</span><span id="res-Re_c" class="result-value"></span></div>
+                        <div class="result-item"><span class="result-label">Nusselt, \(Nu_c\)</span><span id="res-Nu_c" class="result-value"></span></div>
+                        <div class="result-item"><span class="result-label">Convection Coeff., \(h_o\)</span><span id="res-h_o" class="result-value"></span></div>
+                        <div class="info-box text-xs mt-2" id="correlation-info-cold">
+                           <!-- Correlation info will be inserted by JS -->
+                        </div>
+                    </div>
+                </div>
+                 <div class="mt-8 border-t pt-8">
+                    <h3 class="font-bold">Overall Coefficients</h3>
+                    <div class="result-item"><span class="result-label">Heat Transfer Rate, \(Q\)</span><span id="res-Q" class="result-value"></span></div>
+                    <div class="result-item"><span class="result-label">Cold Fluid Outlet Temp., \(T_{c,out}\)</span><span id="res-Tc_out" class="result-value"></span></div>
+                    <div class="result-item"><span class="result-label">LMTD (Counter-flow)</span><span id="res-LMTD" class="result-value"></span></div>
+                    <div class="result-item"><span class="result-label">Clean Overall Coeff., \(U_c\)</span><span id="res-Uc" class="result-value"></span></div>
+                    <div class="result-item"><span class="result-label">Design Overall Coeff., \(U_d\)</span><span id="res-Ud" class="result-value"></span></div>
+                </div>
+            </div>
+                <div class="nav-buttons"><button class="btn btn-secondary prev-btn">Previous</button><button class="btn btn-primary next-btn">Next</button></div>
+            </div>
+            <div id="slide-3" class="slide">
+                <div class="card">
+                <h2 class="font-bold text-center">Performance Analysis</h2>
+                <h3>Design Indicators</h3>
+                <div class="result-item"><span class="result-label">Cleanliness Factor (CF = U<sub>d</sub>/U<sub>c</sub>)</span><span id="res-CF" class="result-value"></span></div>
+                <div class="result-item"><span class="result-label">Oversizing (OS)</span><span id="res-OS" class="result-value"></span></div>
+                
+                <h3 class="mt-8">Effectiveness-NTU</h3>
+                 <div class="result-item"><span class="result-label">Minimum Heat Capacity, \(C_{min}\)</span><span id="res-Cmin" class="result-value"></span></div>
+                 <div class="result-item"><span class="result-label">Capacity Ratio, \(C_r\)</span><span id="res-Cr" class="result-value"></span></div>
+                 <div class="result-item"><span class="result-label">Number of Transfer Units (NTU)</span><span id="res-NTU" class="result-value"></span></div>
+                 <div class="result-item"><span class="result-label">Effectiveness, \(\epsilon\)</span><span id="res-effectiveness" class="result-value"></span></div>
+
+                <h3 class="mt-8 text-center font-bold">Final Sizing</h3>
+                <div class="result-item"><span class="result-label">Required Transfer Area, \(A_{req}\)</span><span id="res-A_req" class="result-value"></span></div>
+                <div class="result-item"><span class="result-label">Number of Hairpins</span><span id="res-N_horquillas" class="result-value"></span></div>
+            </div>
+                <div class="nav-buttons"><button class="btn btn-secondary prev-btn">Previous</button><button class="btn btn-primary next-btn">Next</button></div>
+            </div>
+            <div id="slide-4" class="slide">
+                <div class="card">
+                <h2 class="text-center font-bold">Hydraulic Analysis</h2>
+                <div class="grid md:grid-cols-2 gap-10">
+                    <div>
+                        <h3 class="font-bold">Inner Pipe (Hot Fluid)</h3>
+                        <div class="result-item"><span class="result-label">Friction Factor, \(f_h\)</span><span id="res-f_h" class="result-value"></span></div>
+                        <div class="result-item"><span class="result-label">Pressure Drop, \(\Delta P_h\)</span><span id="res-dP_h" class="result-value"></span></div>
+                        <div class="result-item"><span class="result-label">Pumping Power, \(P_h\)</span><span id="res-P_h" class="result-value"></span></div>
+                    </div>
+                    <div>
+                        <h3 class="font-bold">Annulus (Cold Fluid)</h3>
+                        <div class="result-item"><span class="result-label">Friction Factor, \(f_c\)</span><span id="res-f_c" class="result-value"></span></div>
+                        <div class="result-item"><span class="result-label">Pressure Drop, \(\Delta P_c\)</span><span id="res-dP_c" class="result-value"></span></div>
+                        <div class="result-item"><span class="result-label">Pumping Power, \(P_c\)</span><span id="res-P_c" class="result-value"></span></div>
+                    </div>
+                </div>
+                 <div id="alert-container" class="mt-8"></div>
+            </div>
+                <div class="nav-buttons"><button class="btn btn-secondary prev-btn">Previous</button><button class="btn btn-primary next-btn">Next</button></div>
+            </div>
+            <div id="slide-5" class="slide">
+                <div class="card">
+                <h2 class="text-center font-bold">Summary & Scenario Comparison</h2>
+                
+                <div class="mt-4 border rounded-lg p-4">
+                    <h3 class="font-bold">Test a New Scenario</h3>
+                    <p class="text-sm text-gray-600 mb-4">Adjust the following parameters and press "Compare" to see the impact on the results.</p>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label for="comp-D_anulo_i">New Dₐ,ᵢ (mm)</label>
+                            <input type="number" id="comp-D_anulo_i" step="0.1">
+                        </div>
+                        <div class="input-group">
+                            <label for="comp-m_h">New ṁₕ (kg/s)</label>
+                            <input type="number" id="comp-m_h" step="0.1">
+                        </div>
+                    </div>
+                     <div class="flex justify-center mt-2">
+                        <button id="compare-btn" class="btn btn-primary">Compare</button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto mt-6">
+                    <table id="comparison-table-slide5" class="w-full text-left comparison-table">
+                        <thead>
+                            <tr>
+                                <th class="p-3 font-semibold">Parameter</th>
+                                <th class="p-3 font-semibold">Base Case</th>
+                                <th class="p-3 font-semibold">New Scenario</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Rows will be inserted by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+                <div class="nav-buttons"><button class="btn btn-secondary prev-btn">Previous</button><button class="btn btn-primary next-btn">Next</button></div>
+            </div>
+            <div id="slide-6" class="slide">
+                 <div class="card">
+                <h2 class="font-bold">Sensitivity Analysis (Geometry)</h2>
+                <p class="text-gray-600 mb-4">This chart shows the impact of varying the <strong>outer pipe diameter</strong> on key design parameters.</p>
+                <div class="chart-container">
+                    <canvas id="geometry-sensitivity-chart"></canvas>
+                </div>
+            </div>
+                <div class="nav-buttons"><button class="btn btn-secondary prev-btn">Previous</button><button class="btn btn-primary next-btn">Next</button></div>
+            </div>
+            <div id="slide-7" class="slide">
+                 <div class="card">
+                <h2 class="font-bold">Sensitivity Analysis (Hot Flow Rate)</h2>
+                <p class="text-gray-600 mb-4">This chart shows the impact of varying the <strong>hot fluid flow rate</strong> on key design parameters.</p>
+                <div class="chart-container">
+                    <canvas id="flow-hot-sensitivity-chart"></canvas>
+                </div>
+            </div>
+                <div class="nav-buttons"><button class="btn btn-secondary prev-btn">Previous</button><button class="btn btn-primary next-btn">Next</button></div>
+            </div>
+            <div id="slide-8" class="slide">
+                 <div class="card">
+                <h2 class="font-bold">Sensitivity Analysis (Cold Flow Rate)</h2>
+                <p class="text-gray-600 mb-4">This chart shows the impact of varying the <strong>cold fluid flow rate</strong> on key annulus parameters.</p>
+                <div class="chart-container">
+                    <canvas id="flow-cold-sensitivity-chart"></canvas>
+                </div>
+            </div>
+                <div class="nav-buttons"><button class="btn btn-secondary prev-btn">Previous</button><button class="btn btn-primary next-btn">Next</button></div>
+            </div>
+            <div id="slide-9" class="slide">
+                <div class="card">
+                <h2 class="font-bold text-center">Final Conclusions</h2>
+                <h3 id="conclusion-title">Base Case Analysis</h3>
+                <p id="analysis-text" class="text-gray-700 leading-relaxed"></p>
+                
+                <h3 class="mt-8">Final Design Diagram (Base Case)</h3>
+                <div id="final-diagram-container" class="flex justify-center items-center p-4 bg-gray-50 rounded-lg">
+                    <!-- SVG will be inserted here -->
+                </div>
+
+                <!-- Final Comparison Table -->
+                <div id="final-comparison-container" class="mt-8 hidden">
+                     <div class="flex justify-between items-center">
+                        <h3 class="font-bold">Final Design Comparison</h3>
+                        <button id="download-csv-btn" class="btn btn-secondary text-sm py-2 px-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Download CSV
+                        </button>
+                    </div>
+                     <div class="overflow-x-auto mt-4">
+                        <table id="comparison-table-slide9" class="w-full text-left comparison-table">
+                            <thead>
+                                <tr>
+                                    <th class="p-3 font-semibold">Parameter</th>
+                                    <th class="p-3 font-semibold">Base Case</th>
+                                    <th class="p-3 font-semibold">New Scenario</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Rows will be inserted by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+                <div class="nav-buttons"><button class="btn btn-secondary prev-btn">Previous</button><button class="btn btn-primary next-btn">Next</button></div>
+            </div>
+            <div id="slide-10" class="slide">
+                <div class="card">
+                <h2 class="text-center font-bold">Bibliography</h2>
+                <ul class="list-disc list-inside text-gray-700 space-y-2">
+                    <li>Kern, D. Q. (1950). <em>Process Heat Transfer</em>. McGraw-Hill.</li>
+                    <li>Çengel, Y. A., & Ghajar, A. J. (2015). <em>Heat and Mass Transfer: Fundamentals & Applications</em>. McGraw-Hill Education.</li>
+                    <li>Kakac, S., Liu, H., & Pramuanjaroenkij, A. (2012). <em>Heat Exchangers: Selection, Rating, and Thermal Design</em>. CRC press.</li>
+                    <li>Tubular Exchanger Manufacturers Association (TEMA). (2019). <em>Standards of the Tubular Exchanger Manufacturers Association</em> (10th ed.).</li>
+                </ul>
+            </div>
+                <div class="nav-buttons"><button class="btn btn-secondary prev-btn">Previous</button><button id="restart-btn" class="btn btn-primary">Restart Design</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Structure -->
+    <div id="chart-modal" class="modal">
+        <div class="modal-content">
+            <span id="close-modal-btn" class="close-button">&times;</span>
+            <canvas id="modal-chart-canvas"></canvas>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- DOM Element Selection ---
+            const slides = document.querySelectorAll('.slide');
+            const nextBtns = document.querySelectorAll('.next-btn');
+            const prevBtns = document.querySelectorAll('.prev-btn');
+            const calculateBtn = document.getElementById('calculate-btn');
+            const compareBtn = document.getElementById('compare-btn');
+            const restartBtn = document.getElementById('restart-btn');
+            const modal = document.getElementById('chart-modal');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            const thermoTriggers = document.querySelectorAll('.thermo-trigger');
+            const downloadBtn = document.getElementById('download-csv-btn');
+            
+            // --- State Variables ---
+            let currentSlide = 0;
+            let baseCaseResults = null;
+            let scenarioResults = null;
+            let chartInstances = {};
+
+            // --- Water Properties Data & Functions ---
+            const waterProps = [
+                { T: 0,   rho: 999.8, cp: 4218, mu: 0.001792, k: 0.561 }, { T: 10,  rho: 999.7, cp: 4192, mu: 0.001306, k: 0.580 },
+                { T: 20,  rho: 998.2, cp: 4182, mu: 0.001002, k: 0.598 }, { T: 30,  rho: 995.7, cp: 4178, mu: 0.000798, k: 0.615 },
+                { T: 40,  rho: 992.2, cp: 4178, mu: 0.000653, k: 0.631 }, { T: 50,  rho: 988.0, cp: 4181, mu: 0.000547, k: 0.644 },
+                { T: 60,  rho: 983.2, cp: 4184, mu: 0.000467, k: 0.654 }, { T: 70,  rho: 977.8, cp: 4189, mu: 0.000404, k: 0.663 },
+                { T: 80,  rho: 971.8, cp: 4196, mu: 0.000355, k: 0.670 }, { T: 90,  rho: 965.3, cp: 4205, mu: 0.000315, k: 0.675 },
+                { T: 100, rho: 958.4, cp: 4216, mu: 0.000282, k: 0.679 }
+            ];
+
+            function interpolate(x, x0, y0, x1, y1) {
+                if (x1 === x0) return y0;
+                return y0 + (y1 - y0) * (x - x0) / (x1 - x0);
+            }
+
+            function getWaterProperties(temp) {
+                if (temp <= waterProps[0].T) return waterProps[0];
+                if (temp >= waterProps[waterProps.length - 1].T) return waterProps[waterProps.length - 1];
+                for (let i = 0; i < waterProps.length - 1; i++) {
+                    if (temp >= waterProps[i].T && temp < waterProps[i + 1].T) {
+                        const p0 = waterProps[i]; const p1 = waterProps[i + 1];
+                        return { T: temp, rho: interpolate(temp, p0.T, p0.rho, p1.T, p1.rho), cp: interpolate(temp, p0.T, p0.cp, p1.T, p1.cp), mu: interpolate(temp, p0.T, p0.mu, p1.T, p1.mu), k: interpolate(temp, p0.T, p0.k, p1.T, p1.k) };
+                    }
+                }
+                return waterProps[waterProps.length - 1];
+            }
+
+            function calculateAndUpdateProperties() {
+                const m_h = parseFloat(document.getElementById('m_h').value), Th_in = parseFloat(document.getElementById('Th_in').value), Th_out = parseFloat(document.getElementById('Th_out').value);
+                const m_c = parseFloat(document.getElementById('m_c').value), Tc_in = parseFloat(document.getElementById('Tc_in').value);
+                if ([m_h, Th_in, Th_out, m_c, Tc_in].some(isNaN)) return;
+                const Q_approx = m_h * 4190 * (Th_in - Th_out);
+                const Tc_out_approx = Tc_in + Q_approx / (m_c * 4180);
+                const T_avg_h = (Th_in + Th_out) / 2, T_avg_c = (Tc_in + Tc_out_approx) / 2;
+                if (isNaN(T_avg_h) || isNaN(T_avg_c)) return;
+                const hotProps = getWaterProperties(T_avg_h), coldProps = getWaterProperties(T_avg_c);
+                document.getElementById('hot-fluid-title').textContent = `Hot Fluid (at ${T_avg_h.toFixed(1)}°C)`;
+                document.getElementById('rho_h').value = hotProps.rho.toFixed(1); document.getElementById('cp_h').value = hotProps.cp.toFixed(0);
+                document.getElementById('mu_h').value = hotProps.mu.toPrecision(3); document.getElementById('k_h').value = hotProps.k.toPrecision(3);
+                document.getElementById('cold-fluid-title').textContent = `Cold Fluid (at ${T_avg_c.toFixed(1)}°C)`;
+                document.getElementById('rho_c').value = coldProps.rho.toFixed(1); document.getElementById('cp_c').value = coldProps.cp.toFixed(0);
+                document.getElementById('mu_c').value = coldProps.mu.toPrecision(3); document.getElementById('k_c').value = coldProps.k.toPrecision(3);
+            }
+
+            // --- Core Functions ---
+            function showSlide(index) { slides.forEach((slide, i) => slide.classList.toggle('active', i === index)); currentSlide = index; }
+            function getInputs() { /* ... same as before ... */ return { Di: parseFloat(document.getElementById('Di').value) / 1000, Do: parseFloat(document.getElementById('Do').value) / 1000, D_anulo_i: parseFloat(document.getElementById('D_anulo_i').value) / 1000, L_horquilla: parseFloat(document.getElementById('L_horquilla').value), k_acero: parseFloat(document.getElementById('k_acero').value), m_h: parseFloat(document.getElementById('m_h').value), Th_in: parseFloat(document.getElementById('Th_in').value), Th_out: parseFloat(document.getElementById('Th_out').value), Rf_i: parseFloat(document.getElementById('Rf_i').value), m_c: parseFloat(document.getElementById('m_c').value), Tc_in: parseFloat(document.getElementById('Tc_in').value), Rf_o: parseFloat(document.getElementById('Rf_o').value), eta_bomba: parseFloat(document.getElementById('eta_bomba').value) / 100, rho_h: parseFloat(document.getElementById('rho_h').value), cp_h: parseFloat(document.getElementById('cp_h').value), mu_h: parseFloat(document.getElementById('mu_h').value), k_h: parseFloat(document.getElementById('k_h').value), rho_c: parseFloat(document.getElementById('rho_c').value), cp_c: parseFloat(document.getElementById('cp_c').value), mu_c: parseFloat(document.getElementById('mu_c').value), k_c: parseFloat(document.getElementById('k_c').value), }; }
+            
+            function performCalculations(overrideInputs = null) {
+                const inputs = overrideInputs || getInputs();
+                for (const key in inputs) { if (isNaN(inputs[key])) { alert(`Invalid input for ${key}. Please check your values.`); return null; } }
+                
+                const Q = inputs.m_h * inputs.cp_h * (inputs.Th_in - inputs.Th_out);
+                const Tc_out = inputs.Tc_in + Q / (inputs.m_c * inputs.cp_c);
+                if (isNaN(Tc_out) || !isFinite(Tc_out)) return null;
+                
+                const dT1 = inputs.Th_in - Tc_out, dT2 = inputs.Th_out - inputs.Tc_in;
+                if (dT1 <= 0 || dT2 <= 0) { alert("Temperature cross-over detected. Check temperatures and flow rates."); return null; }
+                if (Math.abs(dT1 - dT2) < 1e-6) { return null; }
+                const LMTD = (dT1 - dT2) / Math.log(dT1 / dT2);
+                
+                // Inner Pipe Calculations
+                const A_i = Math.PI * Math.pow(inputs.Di, 2) / 4, v_h = inputs.m_h / (inputs.rho_h * A_i);
+                const Re_h = (inputs.rho_h * v_h * inputs.Di) / inputs.mu_h, Pr_h = (inputs.cp_h * inputs.mu_h) / inputs.k_h;
+                let Nu_h, correlation_h;
+                if (Re_h < 2300) {
+                    Nu_h = 4.36; // Laminar flow, constant heat flux
+                    correlation_h = "Laminar (Nu = 4.36)";
+                } else { // Transitional and Turbulent
+                    const f_h_g = Math.pow(0.79 * Math.log(Re_h) - 1.64, -2); // Petukhov friction factor for Gnielinski
+                    Nu_h = ((f_h_g / 8) * (Re_h - 1000) * Pr_h) / (1 + 12.7 * Math.pow(f_h_g / 8, 0.5) * (Math.pow(Pr_h, 2/3) - 1));
+                    correlation_h = "Turbulent (Gnielinski)";
+                }
+                const h_i = (Nu_h * inputs.k_h) / inputs.Di, h_io = h_i * (inputs.Di / inputs.Do);
+                
+                // Annulus Calculations
+                const D_h_anulo = inputs.D_anulo_i - inputs.Do, D_e = (Math.pow(inputs.D_anulo_i, 2) - Math.pow(inputs.Do, 2)) / inputs.Do;
+                const A_anulo = Math.PI * (Math.pow(inputs.D_anulo_i, 2) - Math.pow(inputs.Do, 2)) / 4, v_c = inputs.m_c / (inputs.rho_c * A_anulo);
+                const Re_c = (inputs.rho_c * v_c * D_e) / inputs.mu_c, Pr_c = (inputs.cp_c * inputs.mu_c) / inputs.k_c;
+                let Nu_c, correlation_c;
+                if (Re_c < 2300) {
+                    Nu_c = 5.5; // Approximation for laminar flow in annulus
+                    correlation_c = "Laminar (Nu ≈ 5.5)";
+                } else { // Transitional and Turbulent
+                    const f_c_g = Math.pow(0.79 * Math.log(Re_c) - 1.64, -2);
+                    Nu_c = ((f_c_g / 8) * (Re_c - 1000) * Pr_c) / (1 + 12.7 * Math.pow(f_c_g / 8, 0.5) * (Math.pow(Pr_c, 2/3) - 1));
+                    correlation_c = "Turbulent (Gnielinski)";
+                }
+                const h_o = (Nu_c * inputs.k_c) / D_e;
+
+                const R_wall = (inputs.Do * Math.log(inputs.Do / inputs.Di)) / (2 * inputs.k_acero);
+                const Uc = 1 / (1/h_io + R_wall + 1/h_o);
+                const Rf_total = inputs.Rf_i * (inputs.Do / inputs.Di) + inputs.Rf_o;
+                const Ud = 1 / (1/Uc + Rf_total);
+                const A_req = Q / (Ud * LMTD), A_horquilla = Math.PI * inputs.Do * (2 * inputs.L_horquilla);
+                const N_horquillas = Math.ceil(A_req / A_horquilla);
+                const CF = Ud / Uc, OS = (Uc / Ud) - 1;
+                const C_h = inputs.m_h * inputs.cp_h, C_c = inputs.m_c * inputs.cp_c;
+                const C_min = Math.min(C_h, C_c), C_max = Math.max(C_h, C_c);
+                const C_r = C_min / C_max;
+                const A_total_provista = N_horquillas * A_horquilla;
+                const NTU = (Ud * A_total_provista) / C_min;
+                const effectiveness = C_r === 1 ? NTU / (1 + NTU) : (1 - Math.exp(-NTU * (1 - C_r))) / (1 - C_r * Math.exp(-NTU * (1 - C_r)));
+                const L_total = N_horquillas * 2 * inputs.L_horquilla;
+                const f_h = Math.pow(0.79 * Math.log(Re_h) - 1.64, -2);
+                const dP_h_friccion = f_h * (L_total / inputs.Di) * (inputs.rho_h * Math.pow(v_h, 2) / 2);
+                const dP_h_codos = N_horquillas * 1.5 * (inputs.rho_h * Math.pow(v_h, 2) / 2);
+                const dP_h = dP_h_friccion + dP_h_codos;
+                const P_h = (inputs.m_h * dP_h) / (inputs.rho_h * inputs.eta_bomba);
+                const Re_c_hydraulic = (inputs.rho_c * v_c * D_h_anulo) / inputs.mu_c;
+                const f_c = Math.pow(0.79 * Math.log(Re_c_hydraulic) - 1.64, -2);
+                const dP_c = f_c * (L_total / D_h_anulo) * (inputs.rho_c * Math.pow(v_c, 2) / 2);
+                const P_c = (inputs.m_c * dP_c) / (inputs.rho_c * inputs.eta_bomba);
+                return { inputs, Q, Tc_out, LMTD, Re_h, Nu_h, h_i, h_io, D_e, D_h_anulo, Re_c, Nu_c, h_o, Uc, Ud, A_req, N_horquillas, CF, OS, C_min, C_r, NTU, effectiveness, f_h, dP_h, P_h, f_c, dP_c, P_c, correlation_h, correlation_c };
+            }
+
+            function populateAllSlides(results) {
+                const format = (val, dec = 2) => val.toLocaleString(undefined, { minimumFractionDigits: dec, maximumFractionDigits: dec });
+                document.getElementById('res-De_anulo').textContent = `${format(results.D_e * 1000, 2)} mm`; document.getElementById('res-Dh_anulo').textContent = `${format(results.D_h_anulo * 1000, 2)} mm`;
+                document.getElementById('res-Re_h').textContent = format(results.Re_h, 0); document.getElementById('res-Nu_h').textContent = format(results.Nu_h, 2);
+                document.getElementById('res-h_i').textContent = `${format(results.h_i, 0)} W/m²K`; document.getElementById('res-h_io').textContent = `${format(results.h_io, 0)} W/m²K`;
+                document.getElementById('correlation-info-hot').innerHTML = `Nusselt number calculated using the <strong>${results.correlation_h}</strong> correlation.`;
+                document.getElementById('res-Re_c').textContent = format(results.Re_c, 0); document.getElementById('res-Nu_c').textContent = format(results.Nu_c, 2);
+                document.getElementById('res-h_o').textContent = `${format(results.h_o, 0)} W/m²K`;
+                document.getElementById('correlation-info-cold').innerHTML = `Nusselt number calculated using the <strong>${results.correlation_c}</strong> correlation.`;
+                document.getElementById('res-Q').textContent = `${format(results.Q / 1000, 2)} kW`;
+                document.getElementById('res-Tc_out').textContent = `${format(results.Tc_out, 1)} °C`; document.getElementById('res-LMTD').textContent = `${format(results.LMTD, 1)} °C`;
+                document.getElementById('res-Uc').textContent = `${format(results.Uc, 0)} W/m²K`; document.getElementById('res-Ud').textContent = `${format(results.Ud, 0)} W/m²K`;
+                document.getElementById('res-CF').textContent = `${format(results.CF * 100, 1)} %`; document.getElementById('res-OS').textContent = `${format(results.OS * 100, 1)} %`;
+                document.getElementById('res-Cmin').textContent = `${format(results.C_min, 0)} W/K`; document.getElementById('res-Cr').textContent = format(results.C_r, 3);
+                document.getElementById('res-NTU').textContent = `${format(results.NTU, 2)}`; document.getElementById('res-effectiveness').textContent = `${format(results.effectiveness * 100, 1)} %`;
+                document.getElementById('res-A_req').textContent = `${format(results.A_req, 2)} m²`; document.getElementById('res-N_horquillas').textContent = results.N_horquillas;
+                document.getElementById('res-f_h').textContent = format(results.f_h, 4); document.getElementById('res-dP_h').textContent = `${format(results.dP_h / 1000, 2)} kPa`;
+                document.getElementById('res-P_h').textContent = `${format(results.P_h, 1)} W`; document.getElementById('res-f_c').textContent = format(results.f_c, 4);
+                document.getElementById('res-dP_c').textContent = `${format(results.dP_c / 1000, 2)} kPa`; document.getElementById('res-P_c').textContent = `${format(results.P_c / 1000, 2)} kW`;
+                const alertContainer = document.getElementById('alert-container');
+                alertContainer.innerHTML = '';
+                if (results.dP_c > 101325) { alertContainer.innerHTML = `<div class="alert-card"><p class="alert-title">DESIGN ADVISORY</p><p class="alert-message mt-2">The pressure drop in the annulus (${format(results.dP_c/101325, 1)} atm) is <strong>high</strong>. Consider optimizing the geometry.</p></div>`; }
+                document.getElementById('comp-D_anulo_i').value = (results.inputs.D_anulo_i * 1000).toFixed(1);
+                document.getElementById('comp-m_h').value = results.inputs.m_h.toFixed(2);
+                populateComparisonTable('#comparison-table-slide5', results, null);
+                document.getElementById('analysis-text').innerHTML = `The thermal design requires <strong>${results.N_horquillas} hairpins</strong> for a heat transfer rate of <strong>${format(results.Q/1000,1)} kW</strong>. The oversizing of <strong>${format(results.OS*100,1)}%</strong> is acceptable.<br><br>The pressure drop in the annulus is <strong>${format(results.dP_c/101325, 1)} atm</strong>. ${results.dP_c > 101325 ? '<strong class="text-orange-700">This value is considerable and leads to significant pumping costs.</strong>' : 'This value is acceptable.'}<br><br><strong>Recommendation:</strong> ${results.dP_c > 101325 ? 'To optimize, explore the sensitivity graphs to see how a larger outer pipe diameter reduces the pressure drop.' : 'The design is viable. Use the comparison table to explore optimizations.'}`;
+                drawFinalDiagram(results.N_horquillas);
+                const finalCompContainer = document.getElementById('final-comparison-container');
+                if (scenarioResults) { populateComparisonTable('#comparison-table-slide9', baseCaseResults, scenarioResults, true); finalCompContainer.classList.remove('hidden'); } else { finalCompContainer.classList.add('hidden'); }
+            }
+
+            function populateComparisonTable(tableSelector, base, scenario, isFinal = false) {
+                const format = (val, dec = 2) => val != null ? val.toLocaleString(undefined, { minimumFractionDigits: dec, maximumFractionDigits: dec }) : '-';
+                const tableBody = document.querySelector(`${tableSelector} tbody`);
+                let rows = [ { label: 'Number of Hairpins', unit: '-', base: base.N_horquillas, scenario: scenario ? scenario.N_horquillas : null, dec: 0 }, { label: 'Required Area, A<sub>req</sub>', unit: 'm²', base: base.A_req, scenario: scenario ? scenario.A_req : null }, { label: 'Oversizing, OS', unit: '%', base: base.OS * 100, scenario: scenario ? scenario.OS * 100 : null, dec: 1 }, { label: 'Annulus ΔP', unit: 'kPa', base: base.dP_c / 1000, scenario: scenario ? scenario.dP_c / 1000 : null }, { label: 'Pumping Power (Cold)', unit: 'kW', base: base.P_c / 1000, scenario: scenario ? scenario.P_c / 1000 : null }, ];
+                if (isFinal) {
+                    rows = [
+                        { label: 'Heat Duty, Q', unit: 'kW', base: base.Q / 1000, scenario: scenario ? scenario.Q / 1000 : null },
+                        { label: 'LMTD', unit: '°C', base: base.LMTD, scenario: scenario ? scenario.LMTD : null, dec: 1 },
+                        { label: 'Design Coeff., U<sub>d</sub>', unit: 'W/m²K', base: base.Ud, scenario: scenario ? scenario.Ud : null, dec: 0 },
+                        { label: 'Cleanliness Factor, CF', unit: '%', base: base.CF * 100, scenario: scenario ? scenario.CF * 100 : null, dec: 1 },
+                        ...rows,
+                        { label: 'Effectiveness, ε', unit: '%', base: base.effectiveness * 100, scenario: scenario ? scenario.effectiveness * 100 : null, dec: 1 },
+                        { label: 'Inner Pipe ΔP', unit: 'kPa', base: base.dP_h / 1000, scenario: scenario ? scenario.dP_h / 1000 : null },
+                        { label: 'Pumping Power (Hot)', unit: 'W', base: base.P_h, scenario: scenario ? scenario.P_h : null, dec: 1 }
+                    ];
+                }
+                tableBody.innerHTML = rows.map(row => `<tr><td class="p-3">${row.label}</td><td class="p-3 font-medium">${format(row.base, row.dec)} ${row.unit}</td><td class="p-3 font-medium">${scenario ? `${format(row.scenario, row.dec)} ${row.unit}`: '-'}</td></tr>`).join('');
+            }
+
+            function generateAllSensitivityGraphs(baseInputs) { /* ... same as before ... */ const geoCtx = document.getElementById('geometry-sensitivity-chart').getContext('2d'); const flowHotCtx = document.getElementById('flow-hot-sensitivity-chart').getContext('2d'); const flowColdCtx = document.getElementById('flow-cold-sensitivity-chart').getContext('2d'); const geoLabels = []; const dP_data = [], A_req_data = [], eff_data = []; const startD = baseInputs.D_anulo_i * 0.9; const endD = baseInputs.D_anulo_i * 1.5; for (let i = 0; i <= 10; i++) { const new_D = startD + (i * (endD - startD) / 10); const results = performCalculations({...baseInputs, D_anulo_i: new_D}); if(results) { geoLabels.push(new_D * 1000); dP_data.push(results.dP_c / 1000); A_req_data.push(results.A_req); eff_data.push(results.effectiveness * 100); } } const geoConfig = { type: 'line', data: { labels: geoLabels.map(l => l.toFixed(1)), datasets: [ { label: 'Pressure Drop (kPa)', data: dP_data, borderColor: '#ef4444', yAxisID: 'y' }, { label: 'Required Area (m²)', data: A_req_data, borderColor: '#3b82f6', yAxisID: 'y1' }, { label: 'Effectiveness (%)', data: eff_data, borderColor: '#22c55e', yAxisID: 'y2', borderDash: [5, 5] } ] }, options: { responsive: true, interaction: { mode: 'index', intersect: false }, scales: { x: { title: { display: true, text: 'Outer Pipe Inner Diameter (mm)' } }, y: { type: 'linear', position: 'left', title: { display: true, text: 'Pressure Drop (kPa)', color: '#ef4444' } }, y1: { type: 'linear', position: 'right', title: { display: true, text: 'Required Area (m²)', color: '#3b82f6' }, grid: { drawOnChartArea: false } }, y2: { type: 'linear', position: 'right', title: { display: true, text: 'Effectiveness (%)', color: '#22c55e' }, grid: { drawOnChartArea: false }, offset: true } } } }; if(chartInstances['geometry-sensitivity-chart']) chartInstances['geometry-sensitivity-chart'].destroy(); chartInstances['geometry-sensitivity-chart'] = new Chart(geoCtx, geoConfig); const flowHotLabels = []; const dP_h_data = [], A_req_h_data = [], Ud_h_data = []; const startFlowH = baseInputs.m_h * 0.5; const endFlowH = baseInputs.m_h * 1.5; for (let i = 0; i <= 10; i++) { const new_m_h = startFlowH + (i * (endFlowH - startFlowH) / 10); const results = performCalculations({...baseInputs, m_h: new_m_h}); if(results) { flowHotLabels.push(new_m_h); dP_h_data.push(results.dP_h / 1000); A_req_h_data.push(results.A_req); Ud_h_data.push(results.Ud); } } const flowHotConfig = { type: 'line', data: { labels: flowHotLabels.map(l => l.toFixed(2)), datasets: [ { label: 'Inner Pipe ΔP (kPa)', data: dP_h_data, borderColor: '#ef4444', yAxisID: 'y' }, { label: 'Required Area (m²)', data: A_req_h_data, borderColor: '#3b82f6', yAxisID: 'y1' }, { label: 'Overall Coeff. Ud (W/m²K)', data: Ud_h_data, borderColor: '#22c55e', yAxisID: 'y2' } ] }, options: { responsive: true, interaction: { mode: 'index', intersect: false }, scales: { x: { title: { display: true, text: 'Hot Fluid Flow Rate (kg/s)' } }, y: { type: 'linear', position: 'left', title: { display: true, text: 'Pressure Drop (kPa)', color: '#ef4444' } }, y1: { type: 'linear', position: 'right', title: { display: true, text: 'Required Area (m²)', color: '#3b82f6' }, grid: { drawOnChartArea: false } }, y2: { type: 'linear', position: 'right', title: { display: true, text: 'Ud (W/m²K)', color: '#22c55e' }, grid: { drawOnChartArea: false }, offset: true } } } }; if(chartInstances['flow-hot-sensitivity-chart']) chartInstances['flow-hot-sensitivity-chart'].destroy(); chartInstances['flow-hot-sensitivity-chart'] = new Chart(flowHotCtx, flowHotConfig); const flowColdLabels = []; const dP_c_data = [], A_req_c_data = [], ho_data = []; const startFlowC = baseInputs.m_c * 0.5; const endFlowC = baseInputs.m_c * 1.5; for (let i = 0; i <= 10; i++) { const new_m_c = startFlowC + (i * (endFlowC - startFlowC) / 10); const results = performCalculations({...baseInputs, m_c: new_m_c}); if(results) { flowColdLabels.push(new_m_c); dP_c_data.push(results.dP_c / 1000); A_req_c_data.push(results.A_req); ho_data.push(results.h_o); } } const flowColdConfig = { type: 'line', data: { labels: flowColdLabels.map(l => l.toFixed(2)), datasets: [ { label: 'Annulus ΔP (kPa)', data: dP_c_data, borderColor: '#ef4444', yAxisID: 'y' }, { label: 'Required Area (m²)', data: A_req_c_data, borderColor: '#3b82f6', yAxisID: 'y1' }, { label: 'Convection Coeff. hₒ (W/m²K)', data: ho_data, borderColor: '#22c55e', yAxisID: 'y2' } ] }, options: { responsive: true, interaction: { mode: 'index', intersect: false }, scales: { x: { title: { display: true, text: 'Cold Fluid Flow Rate (kg/s)' } }, y: { type: 'linear', position: 'left', title: { display: true, text: 'Pressure Drop (kPa)', color: '#ef4444' } }, y1: { type: 'linear', position: 'right', title: { display: true, text: 'Required Area (m²)', color: '#3b82f6' }, grid: { drawOnChartArea: false } }, y2: { type: 'linear', position: 'right', title: { display: true, text: 'hₒ (W/m²K)', color: '#22c55e' }, grid: { drawOnChartArea: false }, offset: true } } } }; if(chartInstances['flow-cold-sensitivity-chart']) chartInstances['flow-cold-sensitivity-chart'].destroy(); chartInstances['flow-cold-sensitivity-chart'] = new Chart(flowColdCtx, flowColdConfig); }
+            function drawFinalDiagram(N) { /* ... same as before ... */ const container = document.getElementById('final-diagram-container'); const width = 400; const hairpinHeight = 40; const spacing = 10; const totalHeight = N * hairpinHeight + (N - 1) * spacing; let svgContent = `<svg width="${width}" height="${totalHeight}" viewBox="0 0 ${width} ${totalHeight}" xmlns="http://www.w3.org/2000/svg">`; for (let i = 0; i < N; i++) { const y = i * (hairpinHeight + spacing); svgContent += `<rect x="20" y="${y}" width="${width - 40}" height="${hairpinHeight}" rx="10" fill="#E5E7EB"/>`; svgContent += `<path d="M 40 ${y + 10} H ${width - 40} C ${width - 25} ${y + 10}, ${width - 25} ${y + 30}, ${width - 40} ${y + 30} H 40" stroke="#3B82F6" stroke-width="3" fill="none"/>`; if (i > 0) { const prevY = (i - 1) * (hairpinHeight + spacing); svgContent += `<path d="M 40 ${prevY + 30} C 25 ${prevY + 30}, 25 ${y + 10}, 40 ${y + 10}" stroke="#4B5563" stroke-width="3" fill="none"/>`; } } svgContent += `<path d="M 0 ${10} H 40 M 30 5 L 40 10 L 30 15" stroke="#EF4444" stroke-width="2.5" fill="none" />`; const lastY = (N - 1) * (hairpinHeight + spacing); svgContent += `<path d="M 0 ${lastY + 30} H 40 M 10 ${lastY + 30} L 0 ${lastY + 25} M 10 ${lastY + 30} L 0 ${lastY + 35}" stroke="#3B82F6" stroke-width="2.5" fill="none" />`; svgContent += `</svg>`; container.innerHTML = svgContent; }
+            function openModal(chartId) { /* ... same as before ... */ const originalChart = chartInstances[chartId]; if (!originalChart) return; const modalCanvas = document.getElementById('modal-chart-canvas'); if (chartInstances['modal']) chartInstances['modal'].destroy(); chartInstances['modal'] = new Chart(modalCanvas, originalChart.config); modal.style.display = "block"; }
+            
+            function downloadComparisonCSV() {
+                if (!baseCaseResults || !scenarioResults) {
+                    alert("Please run a comparison scenario first before downloading.");
+                    return;
+                }
+
+                const format = (val, dec = 3) => val != null ? val.toFixed(dec) : 'N/A';
+                const rows = [
+                    { label: 'Heat Duty, Q', unit: 'kW', base: baseCaseResults.Q/1000, scenario: scenarioResults.Q/1000 },
+                    { label: 'LMTD', unit: '°C', base: baseCaseResults.LMTD, scenario: scenarioResults.LMTD, dec: 1 },
+                    { label: 'Design Coeff., Ud', unit: 'W/m²K', base: baseCaseResults.Ud, scenario: scenarioResults.Ud, dec: 0 },
+                    { label: 'Cleanliness Factor, CF', unit: '%', base: baseCaseResults.CF * 100, scenario: scenarioResults.CF * 100, dec: 1 },
+                    { label: 'Number of Hairpins', unit: '-', base: baseCaseResults.N_horquillas, scenario: scenarioResults.N_horquillas, dec: 0 },
+                    { label: 'Required Area, A_req', unit: 'm²', base: baseCaseResults.A_req, scenario: scenarioResults.A_req },
+                    { label: 'Oversizing, OS', unit: '%', base: baseCaseResults.OS * 100, scenario: scenarioResults.OS * 100, dec: 1 },
+                    { label: 'Effectiveness, ε', unit: '%', base: baseCaseResults.effectiveness * 100, scenario: scenarioResults.effectiveness * 100, dec: 1 },
+                    { label: 'Inner Pipe ΔP', unit: 'kPa', base: baseCaseResults.dP_h / 1000, scenario: scenarioResults.dP_h / 1000 },
+                    { label: 'Annulus ΔP', unit: 'kPa', base: baseCaseResults.dP_c / 1000, scenario: scenarioResults.dP_c / 1000 },
+                    { label: 'Pumping Power (Hot)', unit: 'W', base: baseCaseResults.P_h, scenario: scenarioResults.P_h, dec: 1 },
+                    { label: 'Pumping Power (Cold)', unit: 'kW', base: baseCaseResults.P_c / 1000, scenario: scenarioResults.P_c / 1000 },
+                ];
+
+                let csvContent = "Parameter,Unit,Base Case,New Scenario\r\n";
+                rows.forEach(row => {
+                    const label = row.label.replace(/<[^>]*>?/gm, ''); // Remove HTML tags
+                    csvContent += `"${label}",${row.unit},${format(row.base, row.dec)},${format(row.scenario, row.dec)}\r\n`;
+                });
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                if (link.download !== undefined) {
+                    const url = URL.createObjectURL(blob);
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", "HeatExchanger_Comparison.csv");
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            }
+
+            // --- Event Listener Setup ---
+            nextBtns.forEach(btn => btn.addEventListener('click', () => { if (currentSlide < slides.length - 1) showSlide(currentSlide + 1); }));
+            prevBtns.forEach(btn => btn.addEventListener('click', () => { if (currentSlide > 0) showSlide(currentSlide - 1); }));
+            restartBtn.addEventListener('click', () => location.reload());
+            calculateBtn.addEventListener('click', () => { const results = performCalculations(); if (results) { baseCaseResults = results; scenarioResults = null; populateAllSlides(results); generateAllSensitivityGraphs(results.inputs); showSlide(currentSlide + 1); } });
+            compareBtn.addEventListener('click', () => {
+                const newInputs = {...baseCaseResults.inputs};
+                const new_D_anulo_i = parseFloat(document.getElementById('comp-D_anulo_i').value);
+                const new_m_h = parseFloat(document.getElementById('comp-m_h').value);
+                if (!isNaN(new_D_anulo_i) && new_D_anulo_i > 0) newInputs.D_anulo_i = new_D_anulo_i / 1000;
+                if (!isNaN(new_m_h) && new_m_h > 0) newInputs.m_h = new_m_h;
+                const newResults = performCalculations(newInputs);
+                if (newResults) { 
+                    scenarioResults = newResults; 
+                    populateComparisonTable('#comparison-table-slide5', baseCaseResults, newResults);
+                    // Also update the final comparison table data
+                    const finalCompContainer = document.getElementById('final-comparison-container');
+                    populateComparisonTable('#comparison-table-slide9', baseCaseResults, scenarioResults, true);
+                    finalCompContainer.classList.remove('hidden');
+                }
+            });
+            thermoTriggers.forEach(el => el.addEventListener('input', calculateAndUpdateProperties));
+            downloadBtn.addEventListener('click', downloadComparisonCSV);
+            closeModalBtn.onclick = () => modal.style.display = "none";
+            window.onclick = (event) => { if (event.target == modal) modal.style.display = "none"; };
+            document.querySelectorAll('.chart-container').forEach(container => container.addEventListener('click', () => openModal(container.querySelector('canvas').id)));
+
+            // --- Initial Run ---
+            calculateAndUpdateProperties();
+        });
+    </script>
+
+</body>
+</html>
